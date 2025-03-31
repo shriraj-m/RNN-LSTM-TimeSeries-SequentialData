@@ -19,7 +19,7 @@ class ModelTrainer:
         self.model = get_model(model_type, input_size, hidden_size, num_classes, num_layers)
         self.model = self.model.to(device)
         self.criterion = nn.CrossEntropyLoss()
-        self.optimizer = optim.Adam(self.model.parameters(), lr=0.001)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=0.001, weight_decay=1e-5)
         self.train_losses = []
         self.train_accuracies = []
         self.val_losses = []
@@ -137,7 +137,7 @@ def plot_comparison(trainers):
     plt.subplot(1, 3, 1)
     for trainer in trainers:
         plt.plot(trainer.train_losses, label=f'{trainer.model_type.upper()} Train')
-        # plt.plot(trainer.val_losses, '--', label=f'{trainer.model_type.upper()} Val')
+        plt.plot(trainer.val_losses, '--', label=f'{trainer.model_type.upper()} Val')
     plt.title('Training and Validation Losses')
     plt.xlabel('Epoch')
     plt.ylabel('Loss')
@@ -147,7 +147,7 @@ def plot_comparison(trainers):
     plt.subplot(1, 3, 2)
     for trainer in trainers:
         plt.plot(trainer.train_accuracies, label=f'{trainer.model_type.upper()} Train')
-        # plt.plot(trainer.val_accuracies, '--', label=f'{trainer.model_type.upper()} Val')
+        plt.plot(trainer.val_accuracies, '--', label=f'{trainer.model_type.upper()} Val')
     plt.title('Training and Validation Accuracies')
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy (%)')
@@ -181,12 +181,12 @@ def main():
     # hyperparameters
     input_size = 2248  # 562 features * 4 (mean, std, max, min) for aggregated features\
     #input_size = 562  # number of features in the HAR dataset
-    hidden_size = 128
+    hidden_size = 64
     num_classes = 6  # number of activity classes
-    num_layers = 2
+    num_layers = 1
     batch_size = 32
     sequence_length = 10
-    num_epochs = 10
+    num_epochs = 70
     n_splits = 5 # number of folds for cross-validation
     
     # download dataset

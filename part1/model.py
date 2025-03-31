@@ -27,6 +27,9 @@ class RNN(nn.Module):
             layer_input_size = input_size if i == 0 else hidden_size
             self.rnn_cells.append(RNNCell(layer_input_size, hidden_size))
         
+        # Add dropout
+        self.dropout = nn.Dropout(p=0.4)
+        
         # Output layer
         self.fc = nn.Linear(hidden_size, num_classes)
         
@@ -50,6 +53,9 @@ class RNN(nn.Module):
                 # use current layer's output as input for next layer
                 xt = h[layer]
         
+        # Apply dropout before final layer
+        h[-1] = self.dropout(h[-1])
+        
         # use the last hidden state for prediction
         out = self.fc(h[-1])
         return out
@@ -67,6 +73,9 @@ class LSTM(nn.Module):
             batch_first=True
         )
         
+        # Add dropout
+        self.dropout = nn.Dropout(p=0.2)
+        
         self.fc = nn.Linear(hidden_size, num_classes)
         
     def forward(self, x):
@@ -77,8 +86,11 @@ class LSTM(nn.Module):
         # Forward propagate LSTM
         out, _ = self.lstm(x, (h0, c0))
         
+        # Apply dropout before final layer
+        out = self.dropout(out[:, -1, :])
+        
         # Decode the hidden state of the last time step
-        out = self.fc(out[:, -1, :])
+        out = self.fc(out)
         return out
 
 class GRU(nn.Module):
@@ -94,6 +106,9 @@ class GRU(nn.Module):
             batch_first=True
         )
         
+        # Add dropout
+        self.dropout = nn.Dropout(p=0.2)
+        
         self.fc = nn.Linear(hidden_size, num_classes)
         
     def forward(self, x):
@@ -103,8 +118,11 @@ class GRU(nn.Module):
         # Forward propagate GRU
         out, _ = self.gru(x, h0)
         
+        # Apply dropout before final layer
+        out = self.dropout(out[:, -1, :])
+        
         # Decode the hidden state of the last time step
-        out = self.fc(out[:, -1, :])
+        out = self.fc(out)
         return out
 
 class BidirectionalLSTM(nn.Module):
@@ -121,6 +139,9 @@ class BidirectionalLSTM(nn.Module):
             bidirectional=True
         )
         
+        # Add dropout
+        self.dropout = nn.Dropout(p=0.2)
+        
         self.fc = nn.Linear(hidden_size * 2, num_classes)  # *2 for bidirectional
         
     def forward(self, x):
@@ -131,8 +152,11 @@ class BidirectionalLSTM(nn.Module):
         # Forward propagate LSTM
         out, _ = self.lstm(x, (h0, c0))
         
+        # Apply dropout before final layer
+        out = self.dropout(out[:, -1, :])
+        
         # Decode the hidden state of the last time step
-        out = self.fc(out[:, -1, :])
+        out = self.fc(out)
         return out
 
 def get_model(model_type, input_size, hidden_size, num_classes, num_layers=1):
