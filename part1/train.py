@@ -133,8 +133,8 @@ class ModelTrainer:
 
 def plot_comparison(trainers):
     # plot training and validation losses
-    plt.figure(figsize=(12, 5))
-    plt.subplot(1, 2, 1)
+    plt.figure(figsize=(15, 5))
+    plt.subplot(1, 3, 1)
     for trainer in trainers:
         plt.plot(trainer.train_losses, label=f'{trainer.model_type.upper()} Train')
         # plt.plot(trainer.val_losses, '--', label=f'{trainer.model_type.upper()} Val')
@@ -144,12 +144,21 @@ def plot_comparison(trainers):
     plt.legend()
     
     # plot training and validation accuracies
-    plt.subplot(1, 2, 2)
+    plt.subplot(1, 3, 2)
     for trainer in trainers:
         plt.plot(trainer.train_accuracies, label=f'{trainer.model_type.upper()} Train')
         # plt.plot(trainer.val_accuracies, '--', label=f'{trainer.model_type.upper()} Val')
     plt.title('Training and Validation Accuracies')
     plt.xlabel('Epoch')
+    plt.ylabel('Accuracy (%)')
+    plt.legend()
+    
+    # plot testing accuracies
+    plt.subplot(1, 3, 3)
+    for trainer in trainers:
+        plt.plot(trainer.test_accuracies, label=f'{trainer.model_type.upper()} Test')
+    plt.title('Testing Accuracies')
+    plt.xlabel('Fold')
     plt.ylabel('Accuracy (%)')
     plt.legend()
     
@@ -177,7 +186,7 @@ def main():
     num_layers = 2
     batch_size = 32
     sequence_length = 10
-    num_epochs = 20
+    num_epochs = 10
     n_splits = 5 # number of folds for cross-validation
     
     # download dataset
