@@ -27,7 +27,7 @@ class ModelTrainer:
         self.test_losses = []
         self.test_accuracies = []
         
-    def train_model(self, train_loader, val_loader, test_loader, num_epochs=10):
+    def train_model(self, train_loader, val_loader, test_loader, num_epochs):
         print(f'\nTraining {self.model_type.upper()} model...')
         best_val_acc = 0.0
         best_model_state = None
@@ -63,7 +63,7 @@ class ModelTrainer:
             self.train_accuracies.append(train_acc)
             
             # Validation phase
-            val_loss, val_acc = self.evaluate_model(val_loader)
+            val_loss, val_acc, _, _ = self.evaluate_model(val_loader)
             self.val_losses.append(val_loss)
             self.val_accuracies.append(val_acc)
             
@@ -78,17 +78,15 @@ class ModelTrainer:
         
         # Load best model for final test evaluation
         self.model.load_state_dict(best_model_state)
-        test_loss, test_acc = self.evaluate_model(test_loader)
+        test_loss, test_acc, test_predictions, test_labels = self.evaluate_model(test_loader)
         self.test_losses.append(test_loss)
         self.test_accuracies.append(test_acc)
         
         print(f'\nFinal Test Results for {self.model_type.upper()}:')
         print(f'Test Loss: {test_loss:.4f}, Test Acc: {test_acc:.2f}%')
         
-        # Save the best model
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        torch.save(best_model_state, f'har_model_{self.model_type}_{timestamp}.pth')
-        print(f'\nBest model saved to har_model_{self.model_type}_{timestamp}.pth')
+        # Plot confusion matrix after all training is complete
+        self.plot_confusion_matrix(test_predictions, test_labels)
     
     def evaluate_model(self, data_loader):
         self.model.eval()
@@ -118,11 +116,13 @@ class ModelTrainer:
         accuracy = 100 * correct / total
         
         # print classification report
-        print(f'\nClassification Report for {self.model_type.upper()}:')
-        print(classification_report(all_labels, all_predictions))
+        # print(f'\nClassification Report for {self.model_type.upper()}:')
+        # print(classification_report(all_labels, all_predictions))
         
-        # plot confusion matrix
-        cm = confusion_matrix(all_labels, all_predictions)
+        return avg_loss, accuracy, all_predictions, all_labels
+
+    def plot_confusion_matrix(self, predictions, labels):
+        cm = confusion_matrix(labels, predictions)
         plt.figure(figsize=(10, 8))
         sns.heatmap(cm, annot=True, fmt='d', cmap='Blues')
         plt.title(f'Confusion Matrix - {self.model_type.upper()}')
@@ -130,8 +130,6 @@ class ModelTrainer:
         plt.xlabel('Predicted Label')
         plt.savefig(f'aggregated_confusion_matrix_{self.model_type}.png')
         plt.close()
-        
-        return avg_loss, accuracy
 
 def plot_comparison(trainers):
     # plot training and validation losses
@@ -179,8 +177,8 @@ def main():
     num_layers = 2
     batch_size = 32
     sequence_length = 10
-    num_epochs = 10
-    n_splits = 5  # number of folds for cross-validation
+    num_epochs = 20
+    n_splits = 5 # number of folds for cross-validation
     
     # download dataset
     data_path = kagglehub.dataset_download("uciml/human-activity-recognition-with-smartphones")
@@ -190,7 +188,7 @@ def main():
     fold_loaders = get_data_loaders(data_path, batch_size, sequence_length, n_splits)
     
     # list of models to train
-    model_types = ['rnn'] # can throw in 'gru' as well
+    model_types = ['rnn', 'lstm', 'bilstm'] # can throw in 'gru' as well
     trainers = []
     
     # train each model on each fold
